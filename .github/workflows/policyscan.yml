@@ -1,33 +1,66 @@
+# Nome do workflow que será exibido na aba "Actions" do GitHub
 name: Veracode Policy Scan
 
+# Define como esse workflow será disparado.
+# Aqui, ele será executado manualmente pelo botão "Run workflow" no GitHub.
 on:
   workflow_dispatch:
 
 jobs:
   build-and-policy-scan:
+    # Define o sistema operacional da máquina virtual usada para rodar o workflow
     runs-on: ubuntu-latest
 
     steps:
-      # Etapa 1: Clona o repositório para o runner do GitHub
+      ######################################################################
+      # Etapa 1: Faz o checkout do repositório atual para a máquina virtual
+      # Isso permite que os próximos comandos tenham acesso ao código-fonte
+      ######################################################################
       - uses: actions/checkout@v2
 
-      # Etapa 2: Comprime os arquivos de código em um zip
+      ######################################################################
+      # Etapa 2: Comprime os arquivos do projeto em um único arquivo .zip
+      #
+      # Isso é necessário porque o Veracode exige que o upload da aplicação
+      # seja feito em formato ZIP contendo os arquivos do código.
+      #
+      # Aqui estão listados os tipos de arquivos que serão incluídos no ZIP:
+      #   - arquivos .py (Python), .js (JavaScript), .php (PHP), .ts (TypeScript)
+      #   - e o arquivo requirements.txt (para dependências do Python)
+      ######################################################################
       - name: Zip Project
         run: zip -R project.zip '*.py' '*.js' '*.php' '*.ts' 'requirements.txt'
         env:
           build-name: project.zip
 
-      # Etapa 3: Salva o arquivo zip como artefato (opcional, mas útil para debug)
+      ######################################################################
+      # Etapa 3: Faz upload do arquivo ZIP como artefato para o GitHub
+      #
+      # Isso é opcional, mas útil se você quiser baixar o ZIP posteriormente
+      # (ex: para debug, testes locais ou documentação)
+      ######################################################################
       - uses: actions/upload-artifact@v2
         with:
           path: project.zip
 
-      # Etapa 4: Executa o upload e o policy scan no Veracode
+      ######################################################################
+      # Etapa 4: Realiza o upload e o Policy Scan na plataforma Veracode
+      #
+      # Essa etapa usa a Action oficial da Veracode para:
+      #   - enviar o arquivo ZIP para análise
+      #   - aplicar a política de segurança definida na plataforma
+      #   - verificar se o projeto passa ou falha nos critérios da política
+      #
+      # ATENÇÃO:
+      # - Essa etapa realmente se comunica com a plataforma Veracode
+      # - O app será criado automaticamente se não existir (por causa do createprofile: true)
+      # - O resultado do scan aparecerá no painel da Veracode com detalhes
+      ######################################################################
       - uses: veracode/veracode-uploadandscan-action@master
         with:
-          appname: '${{ secrets.VERACODE_APP_NAME }}'     # Nome da aplicação na Veracode (ex: cloudgoat002)
-          filepath: 'project.zip'                         # Caminho para o zip criado
-          vid: '${{ secrets.VERACODE_API_ID }}'           # ID da API da Veracode
-          vkey: '${{ secrets.VERACODE_API_KEY }}'         # Chave da API da Veracode
-          scantimeout: 15                                 # Tempo máximo de espera pelo scan
-          createprofile: true                             # Cria o app na Veracode se ele ainda não existir
+          appname: '${{ secrets.VERACODE_APP_NAME }}'     # Nome da aplicação no Veracode
+          filepath: 'project.zip'                         # Caminho do arquivo compactado
+          vid: '${{ secrets.VERACODE_API_ID }}'           # ID da API (armazenado nos secrets do GitHub)
+          vkey: '${{ secrets.VERACODE_API_KEY }}'         # Chave da API (também nos secrets)
+          scantimeout: 15                                 # Tempo máximo de espera pela conclusão do scan
+          createprofile: true                             # Cria o app no Veracode automaticamente, se não existir

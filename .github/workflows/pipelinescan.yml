@@ -33,7 +33,7 @@ jobs:
       # *.php = arquivos PHP
       # *.ts = arquivos TypeScript
       - name: Zip Project
-        run: zip -R project.zip '*.py' '*.js' '*.php' '*.ts'
+        run: zip -R project.zip '*.py' '*.js' '*.php' '*.ts' 'requirements.txt'
         env:
           build-name: project.zip
 

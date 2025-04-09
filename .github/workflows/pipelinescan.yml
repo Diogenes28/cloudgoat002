@@ -1,5 +1,5 @@
 # Esse workflow faz uma varredura no código do projeto usando o Veracode Pipeline Scan.
-# Ele empacota o código, envia para análise, gera um relatório com os resultados e transforma isso em alertas de segurança no GitHub.
+# Ele empacota o código, envia para análise, gera um relatório com os resultados e transforma isso em alertas de segurança no GitHub — mas **não envia nada para o painel da Veracode**.
 
 name: Veracode Static Analysis Pipeline Scan
 
